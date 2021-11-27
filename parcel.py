@@ -1,4 +1,5 @@
 import pickle
+from enum import Enum
 
 class Mode(Enum):
     CONVERSE = 1
