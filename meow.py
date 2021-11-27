@@ -1,5 +1,5 @@
 
-class ChatMeow(object):
+class Meow(object):
 
     name = ''
     server = ''
@@ -10,17 +10,22 @@ class ChatMeow(object):
     
     def start(self):
         try:
-            self.identify()
-            self.connect()
+            Init()
+            
             answer = input("You are "+self.name+" and you want to connect to "+self.server + ":" + str(self.port)+"? ")
         except:
             print('\n')
             pass
 
+class Init(Meow):
+
+    def __init__(self):
+        self.identify()
+        self.connect()
+        
     def connect(self):
         self.getServer()
         self.getPort()
-
 
     def getServer(self):
 
@@ -64,7 +69,8 @@ class ChatMeow(object):
             
     def isValidName(self, name):
         return name.strip() != ''
-
+    
+    
 if __name__ == '__main__':
-    c = ChatMeow()
-    c.start()
+    m = Meow()
+    m.start()
