@@ -11,7 +11,7 @@ class YesNo(object):
         )
 
     def showYesNo(self):
-        return "[".join(self.YES)+"] or  "+"[".join(self.NO)+"]"
+        return "[".join(self.YES)+"] or "+"[".join(self.NO)+"]: "
     
     def isYesOrNo(self, answer):
         return self.isValidAnswer(answer)

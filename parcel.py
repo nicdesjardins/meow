@@ -1,4 +1,3 @@
-import pickle
 from enum import Enum
 
 class Mode(Enum):
@@ -7,6 +6,10 @@ class Mode(Enum):
     SERVER_COMMAND = 3
     QUIT = 4
 
+class ServerCommands(Enum):
+    STOP = 1
+    RESTART = 2
+    
 class Lingo(Enum):
     PICKLE = 1
     JSON = 2
