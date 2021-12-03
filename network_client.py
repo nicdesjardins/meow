@@ -32,7 +32,7 @@ class NetworkClient(object):
         self.connected = False
     
     def send(self, data):
-        # Take our data send it via socket
+        self.socket.sendall(data)
         pass
 
     def receive(self):

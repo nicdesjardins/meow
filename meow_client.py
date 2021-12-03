@@ -9,11 +9,6 @@ MeowClient:
 - Gets config from config.py (config.py inherits from Meow)
 
 To do:
-- Connect to a server w/ network_client (will it inherit Meow?)
-- Convert its object(s) into data using Parcel
-- Send data converted by Parcel to the server via the network_client
-- network client will receive data
-- data will be converted back to a usable object by Parcel
 - MeowClient will then action (e.g. display w/ ui, do an action, etc)
 '''
 
@@ -28,11 +23,17 @@ class MeowClient(Meow):
             print("\nOK, then we're all set to keep going!\n")
             self.netClient = NetworkClient(self.settings.server, self.settings.port, self.netHandler)
             self.netClient.connect()
+            self.sendHelloToServer()
 
         except KeyboardInterrupt as ex:
             print('\nOk then, bye!')
             pass
-    
+        
+    def sendHelloToServer(self):
+        p = Parcel()
+        p.msg = 'Hello from '+self.settings.name+"!"
+        self.netClient.send(p.pack())
+            
     def netHandler(self, data):
         p = Parcel()
         p.unpack(data)
