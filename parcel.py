@@ -1,23 +1,23 @@
-from enum import Enum
+from enum import IntEnum
 
-class Mode(Enum):
+class Mode(IntEnum):
     CONVERSE = 1
     WHISPER = 2
     SERVER_COMMAND = 3
     QUIT = 4
 
-class ServerCommands(Enum):
+class ServerCommands(IntEnum):
     STOP = 1
     RESTART = 2
     
-class Lingo(Enum):
+class Lingo(IntEnum):
     PICKLE = 1
     JSON = 2
     
 class Parcel(object):
 
     lingo = Lingo.PICKLE
-    mode = Mode.CHAT
+    mode = Mode.CONVERSE
     msg = ''
     user = ''
     room = 'main'
@@ -28,7 +28,7 @@ class Parcel(object):
     
     def __str__(self):
         return (
-            'mode: 'str(self.mode)
+            'mode: '+str(self.mode)
             +'; msg: '+self.msg
             +'; user: '+self.user
             +'; room: '+self.room
@@ -36,45 +36,38 @@ class Parcel(object):
   
     def pack(self):
 
-        def pickle():
+        data = None
+        if self.lingo == Lingo.PICKLE:
             import pickle
-            return pickle.dumps(self.parcel())
+            data = pickle.dumps(self.parcel())
 
-        def json():
+        elif self.lingo == Lingo.JSON:
             import json
-            return json.dumps(self.parcel())
-
-        switch={
-            Lingo.PICKLE: pickle(),
-            Lingo.JSON: json(),
-        }
-        
-        return switch.get(self.lingo)
+            data = json.dumps(self.parcel())
+       
+        return data
 
     def parcel(self):
         return  {
-            'mode': self.mode,
+            'mode': int(self.mode),
             'msg': self.msg,
             'user': self.user,
             'room': self.room,
         }
     
     def unpack(self, data):
+
+        obj = {}
         
-        def pickle():
+        if self.lingo == Lingo.PICKLE:
             import pickle
-            return pickle.loads(data)
+            obj = pickle.loads(data)
 
-        def json():
+        elif self.lingo == Lingo.JSON:
             import json
-            return json.loads(data)
+            obj = json.loads(data)
 
-        switch={
-            Lingo.PICKLE: pickle(),
-            Lingo.JSON: json(),
-        }
-        
-        self.unparcel(switch.get(self.lingo))
+        self.unparcel(obj)
 
     def unparcel(self, parcel):
         self.mode = parcel['mode']

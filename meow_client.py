@@ -36,7 +36,7 @@ class MeowClient(Meow):
     def netHandler(self, data):
         p = Parcel()
         p.unpack(data)
-        print("Received " +str(p))
+        print("Received: " +str(p))
 
 class ConnectToServer(Meow):
     def __init__(self):
