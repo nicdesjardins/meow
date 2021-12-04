@@ -2,7 +2,7 @@ from meow import Meow
 from config import GetUserDetails, ConfirmAnswers
 from network_client import NetworkClient
 from parcel import Parcel
-
+from ui import UI
 '''
 MeowClient:
 - Inherits Meow
@@ -23,21 +23,22 @@ class MeowClient(Meow):
             print("\nOK, then we're all set to keep going!\n")
             self.netClient = NetworkClient(self.settings.server, self.settings.port, self.netHandler)
             self.netClient.connect()
-            self.sendHelloToServer()
+            self.ui = UI(self.userInputHandler)
+            self.ui.start()
 
         except KeyboardInterrupt as ex:
             print('\nOk then, bye!')
             pass
-        
-    def sendHelloToServer(self):
+
+    def userInputHandler(self, string):
         p = Parcel()
-        p.msg = 'Hello from '+self.settings.name+"!"
+        p.msg = string
         self.netClient.send(p.pack())
             
     def netHandler(self, data):
         p = Parcel()
         p.unpack(data)
-        print("Received: " +str(p))
+        self.ui.addStringToOutput(p.msg)
 
 class ConnectToServer(Meow):
     def __init__(self):

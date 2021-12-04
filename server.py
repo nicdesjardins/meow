@@ -56,19 +56,27 @@ class Server(object):
 
     def handleClient(self, client):
         print("Client "+str(client.fileno())+" connected from "+str(self.addresses[client]))
-        p = Parcel()
-        p.msg = 'Hello, World!'
-        data = p.pack()
-        client.sendall(data)
+        self.clients[client] = client.fileno()
+        
+        #p = Parcel()
+        #p.msg = 'Hello, World!'
+        #data = p.pack()
+        #client.sendall(data)
         
         while True:
             data = client.recv(self.BUFFSIZE)
-            self.handleClientData(data)
+            self.handleClientData(data, client)
 
-    def handleClientData(self, data):
+    def handleClientData(self, data, client):
         p = Parcel()
         p.unpack(data)
-        print("Received data from client: "+str(p))
+        
+        print("Received data from client ["+str(client.fileno())+"]: "+str(p))
+        self.broadcast(data, client)
+        
+    def broadcast(self, data, client):
+        for sock in self.clients:
+            sock.sendall(data)
         
 if __name__ == '__main__':
     s = Server()
