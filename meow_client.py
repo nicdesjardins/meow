@@ -20,7 +20,6 @@ class MeowClient(Meow):
                 GetUserDetails()
                 ConfirmAnswers()
             
-            print("\nOK, then we're all set to keep going!\n")
             self.netClient = NetworkClient(self.settings.server, self.settings.port, self.netHandler)
             self.netClient.connect()
             self.ui = UI(self.userInputHandler)
