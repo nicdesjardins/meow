@@ -18,6 +18,11 @@ UI Does:
 import curses
 import os
 from threading import Thread
+from enumerations import Enum
+
+def side(Enum):
+    LEFT = 1
+    RIGHT = 2
 
 class UI(object):
 
@@ -47,6 +52,8 @@ class UI(object):
         
         self.outputWin = curses.newpad(self.height - self.INPUT_HEIGHT, self.width)
         self.outputWin.bkgd(' ', curses.color_pair(self.WHITE_ON_BLUE))
+        self.outX = 1
+        self.outY = 1
         self.outputWin.border()
         self.refreshOutputWin()
         
@@ -60,7 +67,31 @@ class UI(object):
         
         self.input_thread = Thread(target=self.inputThread)
         self.input_thread.start()
+
+    def addStringToOutput(self, string):
+        self.outputWin.addstr(self.outY, self.outX, string)
+        self.refreshOutputWin()
+        self.outY += 2
+        self.screen.move(self.inYScr, self.inXScr)
+        self.screen.refresh()
         
+    def inputThread(self):
+        while True:
+            try:
+                ch = self.screen.getch()
+                self.inX += 1
+                self.inXScr = self.inX
+                self.input_str += chr(ch)
+
+                if self.hitEnterKey(ch):
+                    if self.input_str.strip() != '':
+                        if self.userInputHandler != None:
+                            self.userInputHandler(self.input_str.strip())
+                    self.resetInput()
+                
+            except Exception as ex:
+                pass
+
     def refreshOutputWin(self):
         pminrow = 0
         pmincol = 0
@@ -79,23 +110,6 @@ class UI(object):
         smaxcol = self.width
         self.inputWin.refresh(pminrow,pmincol, sminrow,smincol, smaxrow,smaxcol)
         
-    def inputThread(self):
-        while True:
-            try:
-                ch = self.screen.getch()
-                self.inX += 1
-                self.inXScr = self.inX
-                self.input_str += chr(ch)
-
-                if self.hitEnterKey(ch):
-                    if self.input_str.strip() != '':
-                        if self.userInputHandler != None:
-                            self.userInputHandler(self.input_str.strip())
-                    self.resetInput()
-                
-            except Exception as ex:
-                pass
-    
     def resetInput(self):
         self.inX = 1
         self.inY = 1
@@ -105,13 +119,6 @@ class UI(object):
         self.screen.move(self.inYScr, self.inXScr)
         self.screen.refresh()
         self.refreshInputWin()
-        
-    def addStringToOutput(self, string):
-        self.outputWin.addstr(self.outY, self.outX, string)
-        self.refreshOutputWin()
-        self.outY += 2
-        self.screen.move(self.inYScr, self.inXScr)
-        self.screen.refresh()
         
     def hitEnterKey(self, ch = None):
         if ch == None:
@@ -124,8 +131,3 @@ class UI(object):
     def getDimensions(self):
         size = os.get_terminal_size()
         return [size.columns, size.lines]
-
-if __name__ == '__main__':
-    ui = UI()
-    curses.wrapper(ui.run)
-
