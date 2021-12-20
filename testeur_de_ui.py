@@ -4,12 +4,8 @@ from network_client import NetworkClient
 from parcel import Parcel
 from ui import UI
 '''
-MeowClient:
-- Inherits Meow
-- Gets config from config.py (config.py inherits from Meow)
-
 To do:
-- MeowClient will then action (e.g. display w/ ui, do an action, etc)
+- 
 '''
 
 class TesteurDeUI(Meow):

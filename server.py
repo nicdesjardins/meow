@@ -2,6 +2,7 @@ from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 from parcel import Parcel, Mode, Lingo
 import errno
+from ui import UI
 '''
 Do things on the server (e.g. take commands)
 Keep track of who's online
@@ -37,19 +38,46 @@ class Server(object):
             print("Stopping...")
         else:
             print("Not running...")
+
+    def display(self, string):
+        #print(string)
+        self.ui.addStringToOutput(string)
         
     def start(self):
+        self.ui = UI()
+        self.ui.start(self.userInputHandler)
+        
         if not self.running:
-            print("Start listening on port "+str(self.port))
-            self.server.bind((self.host, self.port))
+            bound = False
+            while not bound:
+                self.display("Attempting to listen on port "+str(self.port))
+                try:
+                    self.server.bind((self.host, self.port))
+                    bound = True
+                except OSError as err:
+                    self.display("Could not bind on port "+str(self.port))
+                    self.display(str(err))
+                    self.ui.getAnswer("Please enter a port:")
+                    while self.port == None:
+                        port = self.ui.getAnswer("Please enter a port")
+                        if self.isValidPort(port):
+                            self.port = port
+                    
             self.server.listen(self.client_limit)
             self.accept_thread = Thread(target=self.acceptIncomingConnections)
             self.accept_thread.start()
             self.running = True
-            print("Listening for a max of "+str(self.client_limit)+" connections @ "+self.host+":"+str(self.port))
+            self.display("Listening for a max of "+str(self.client_limit)+" connections @ "+self.host+":"+str(self.port))
         else:
-            print("Already running...")
-
+            self.display("Already running...")
+            
+    def isValidPort(self, port):
+        try:
+            validPort = int(port)
+            return true
+        except:
+            return false
+        
     def acceptIncomingConnections(self):
         while True:
             client, client_address = self.server.accept()
@@ -57,7 +85,7 @@ class Server(object):
             Thread(target=self.handleClient, args=(client,)).start()
 
     def handleClient(self, client):
-        print("Client "+str(client.fileno())+" connected from "+str(self.addresses[client]))
+        self.display("Client "+str(client.fileno())+" connected from "+str(self.addresses[client]))
         self.clients[client] = client.fileno()
         
         while True:
@@ -68,10 +96,18 @@ class Server(object):
         p = Parcel()
         p.unpack(data)
         
-        print("Received data from client ["+str(client.fileno())+"]: "+str(p))
+        self.display("Received data from client ["+str(client.fileno())+"]: "+str(p))
         self.broadcast(data, client)
+
+    def userInputHandler(self, string):
+        if self.running:
+            p = Parcel()
+            p.msg = string
+            self.broadcast(p.pack())
+            self.ui.addStringToOutput(string)
+            self.ui.resetInput()
         
-    def broadcast(self, data, client):
+    def broadcast(self, data, client = None):
         for sock in self.clients:
             try:
                 sock.sendall(data)
@@ -79,8 +115,8 @@ class Server(object):
                 if ex.errno ==  errno.EPIPE:
                     client.close()
                     del clients[client]
-                    print("caught broken pipe!")
-                print("Caught exception when trying to send to client "+str(sock.fileno())+".Ex:\n"+str(ex)+"\nerrno:"+str(ex.errno))
+                    self.display("caught broken pipe!")
+                self.display("Caught exception when trying to send to client "+str(sock.fileno())+".Ex:\n"+str(ex)+"\nerrno:"+str(ex.errno))
         
 if __name__ == '__main__':
     import sys
