@@ -9,6 +9,7 @@ import curses
 import os
 from threading import Thread
 from enum import Enum
+from color_pair import ColorPair
 
 def side(Enum):
     LEFT = 1
@@ -23,8 +24,13 @@ class UI(object):
     outputScroll = 0
     outY = 1
     outX = 1
-
+    inX = 0
+    inY = 0
     text = []
+    show_from_index = 0
+    show_to_index = 0
+
+    cp = ColorPair()
     
     def __init__(self, userInputHandler = None):
         self.userInputHandler = userInputHandler
@@ -34,76 +40,39 @@ class UI(object):
             self.userInputHandler = userInputHandler
         
         curses.wrapper(self.run)
-
-    def setBoundaries(self):
-        pass
-        #    self.width, self.height = self.getDimensions()
-        
+    
     def run(self, window):
 
         self.window = window
-        #self.setBoundaries()
         
         self.screen = curses.initscr()
-        curses.init_pair(self.WHITE_ON_BLUE, curses.COLOR_WHITE, curses.COLOR_BLUE)
-        curses.init_pair(self.BLUE_ON_WHITE, curses.COLOR_BLUE, curses.COLOR_WHITE)
+        curses.start_color()
         
-        self.screen.bkgd(' ', curses.color_pair(self.BLUE_ON_WHITE))
+        self.screen.bkgd(' ', self.cp.getPair(curses.COLOR_BLUE, curses.COLOR_WHITE))
         
         self.createInputWin()
         self.createOutputWin()
         
         self.input_thread = Thread(target=self.inputThread).start()
-
-    def getOutputHeight(self):
-        return self.height - self.INPUT_HEIGHT
-    outputHeight = property(getOutputHeight)
-
-    def getOutputWidth(self):
-        return self.width
-    outputWidth = property(getOutputWidth)
-
-
-    def getInputHeight(self):
-        return self.INPUT_HEIGHT
-    inputHeight = property(getInputHeight)
-
-    def getInputWidth(self):
-        return self.width
-    inputWidth = property(getInputWidth)
-    
-    def resizeInputWin(self):
-        self.inputWin.resize(self.inputHeight, self.inputWidth)
-        
-    def resizeOutputWin(self):
-        self.outputWin.resize(self.outputHeight, self.outputWidth)
-        
-    def createOutputWin(self):
-        self.outputWin = curses.newpad(self.outputHeight, self.outputWidth)
-        self.outputWin.scrollok(True)
-        self.outputWin.idlok(True)
-
-        self.outputWin.bkgd(' ', curses.color_pair(self.WHITE_ON_BLUE))
-        self.outputWin.border()
-        self.refreshOutputWin()
-        
-    def createInputWin(self):
-        self.inputWin = curses.newpad(self.inputHeight, self.inputWidth)
-        self.refreshInputWin()
-        
-        self.inputWin.bkgd(' ', curses.color_pair(self.BLUE_ON_WHITE))
-        self.inputWin.border()
-        
-        self.resetInput()
-
-    #def scroll = 0
-    def pad = []
-    def show_from_index = 0
-    def show_to_index = 0
+        #self.inputThread()
+        self.screen.refresh()
     
     def addStringToOutput(self, string):
-        pad.append(string)
+        self.text.append(string)
+
+        '''
+        self.outputWin.erase()
+        self.outY = 0
+        self.outX = 0
+        for s in self.text:
+            self.outputWin.addstr(self.outY, self.outX, s)
+            self.outY += 1
+        self.screen.refresh()
         
+        #self.outputWin.
+        '''
+        '''
+        saving this as I restart output from scratch
         if self.outY + 2 >= self.height - self.INPUT_HEIGHT:
             self.outputScroll += 2
         
@@ -112,7 +81,70 @@ class UI(object):
         self.outY += 2
         self.screen.move(self.inYScr, self.inXScr)
         self.screen.refresh()
+        '''
+    
+        
+    '''
+    def resizeInputWin(self):
+        self.inputWin.resize(self.inputHeight, self.inputWidth)
+        
+    def resizeOutputWin(self):
+        self.outputWin.resize(self.outputHeight, self.outputWidth)
+    ''' 
+    def createOutputWin(self):
+        
+        self.outputWin = curses.newwin(self.outputHeight, self.outputWidth, 0, 0)
+        self.outputWin.bkgd(' ', self.cp.getPair(curses.COLOR_BLUE, curses.COLOR_WHITE))
+        self.outputWin.border()
+        
+    def createInputWin(self):
+        self.inputWin = curses.newwin(self.inputHeight, self.inputWidth, self.outputHeight, 0)
+        self.inputWin.bkgd(' ', self.cp.getPair(curses.COLOR_WHITE, curses.COLOR_BLUE))
+        self.inputWin.border()
+    
+    def inputThread(self):
+        
+        while True:
+            try:
+                ch = self.screen.getch()
+                self.input_str += chr(ch)
 
+                if self.isEnterKey(ch):
+                    
+                    if self.input_str.strip() != '':
+                        if self.userInputHandler != None:
+                            self.userInputHandler(self.input_str.strip())
+                        self.resetInput()
+                    else:
+                        self.addCharToInput(ch)
+                
+                elif ch == curses.KEY_RESIZE:
+                    self.handleResize()
+                
+                self.screen.refresh()
+            except Exception as ex:
+                pass
+    
+    def addCharToInput(self, ch):
+        self.inputWin.addch(self.inY, self.inX, ch)
+        self.input_str += chr(ch)
+        self.inX += 1
+
+    def resetInput(self):
+        #self.inY = 0
+        #self.inX = 0
+        self.input_str = ''
+        self.inputWin.erase()
+        self.inputWin.refresh()
+#        self.screen.move(self.inY, self.inX)
+        
+    def handleResize(self):
+        #self.resizeOutputWin()
+        #self.resizeInputWin()
+        #self.refreshOutputWin()
+        #self.refreshInputWin()
+        self.screen.refresh()
+        
     def getAnswer(self, question):
         self.answer = None
         self.addStringToOutput(question)
@@ -123,36 +155,24 @@ class UI(object):
     
     def getAnswerUserInputHandler(self, string):
         self.answer = string
-    
-    def inputThread(self):
-        while True:
-            try:
-                ch = self.screen.getch()
-                self.input_str += chr(ch)
+            
+    def getOutputHeight(self):
+        return self.height - self.INPUT_HEIGHT
+    outputHeight = property(getOutputHeight)
 
-                if self.hitEnterKey(ch):
-                    if self.input_str.strip() != '':
-                        if self.userInputHandler != None:
-                            self.userInputHandler(self.input_str.strip())
-                    self.resetInput()
-                elif ch == curses.KEY_RESIZE:
-                    print("hello?")
-                    
-                    self.setBoundaries()
-                    self.addStringToOutput(
-                        "resize triggered "
-                        +"h: "+ str(self.height)
-                        + "; w: "+str(self.width)
-                    )
-                    self.resizeOutputWin()
-                    self.resizeInputWin()
-                    self.refreshOutputWin()
-                    self.refreshInputWin()
-                    self.screen.refresh()
-                
-            except Exception as ex:
-                pass
+    def getOutputWidth(self):
+        return self.width
+    outputWidth = property(getOutputWidth)
 
+    def getInputHeight(self):
+        return self.INPUT_HEIGHT
+    inputHeight = property(getInputHeight)
+
+    def getInputWidth(self):
+        return self.width
+    inputWidth = property(getInputWidth)
+
+    '''
     def refreshOutputWin(self):
         pminrow = self.outputScroll
         pmincol = 0
@@ -162,7 +182,7 @@ class UI(object):
         smaxcol = self.width
         self.outputWin.border()
         self.outputWin.refresh(pminrow,pmincol, sminrow,smincol, smaxrow,smaxcol)
-        
+
     def refreshInputWin(self):
         pminrow = 0
         pmincol = 0
@@ -173,15 +193,9 @@ class UI(object):
         self.inputWin.border()
         self.inputWin.refresh(pminrow,pmincol, sminrow,smincol, smaxrow,smaxcol)
         self.screen.refresh()
+    '''
         
-    def resetInput(self):
-        self.inYScr = (self.height - self.INPUT_HEIGHT) + 1
-        self.inXScr = 1
-        self.input_str = ''
-        self.refreshInputWin()
-        self.screen.move(self.inYScr, self.inXScr)
-        
-    def hitEnterKey(self, ch = None):
+    def isEnterKey(self, ch = None):
         if ch == None:
             ch = self.ch
         return self.isNewline(ch)
